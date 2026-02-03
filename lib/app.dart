@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       initialRoute: isOnboardingCompleted
-          ? AppRoutes.notesList
+          ? AppRoutes.alarmHome
           : AppRoutes.onboarding,
       onGenerateRoute: AppRouter.generateRoute,
     );

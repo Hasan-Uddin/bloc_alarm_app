@@ -80,16 +80,4 @@ class AlarmRepositoryImpl implements AlarmRepository {
       return Left(CacheFailure('Failed to toggle alarm: $e'));
     }
   }
-
-  @override
-  Future<Either<Failure, String?>> getUserLocation() async {
-    try {
-      AppLogger.info('Repository: Getting user location');
-      final location = await localDataSource.getUserLocation();
-      return Right(location);
-    } catch (e) {
-      AppLogger.error('Repository: Error getting user location - $e');
-      return Left(CacheFailure('Failed to get location'));
-    }
-  }
 }

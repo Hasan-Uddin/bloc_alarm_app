@@ -1,12 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../helpers/logger.dart';
+import '../../../location/domain/usecases/get_saved_location.dart';
 import '../../domain/entities/alarm_entity.dart';
 import '../../domain/usecases/add_alarm.dart';
 import '../../domain/usecases/delete_alarm.dart';
 import '../../domain/usecases/get_alarms.dart';
-import '../../domain/usecases/get_user_location.dart';
 import '../../domain/usecases/toggle_alarm.dart';
 import 'alarm_event.dart';
 import 'alarm_state.dart';
@@ -16,14 +15,14 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
   final AddAlarm addAlarm;
   final DeleteAlarm deleteAlarm;
   final ToggleAlarm toggleAlarm;
-  final GetUserLocation getUserLocation;
+  final GetSavedLocation getSavedLocation;
 
   AlarmBloc({
     required this.getAlarms,
     required this.addAlarm,
     required this.deleteAlarm,
     required this.toggleAlarm,
-    required this.getUserLocation,
+    required this.getSavedLocation,
   }) : super(AlarmInitial()) {
     on<LoadAlarmsEvent>(_onLoadAlarms);
     on<LoadUserLocationEvent>(_onLoadUserLocation);
@@ -36,67 +35,77 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
     LoadAlarmsEvent event,
     Emitter<AlarmState> emit,
   ) async {
-    AppLogger.info('BLoC: Loading alarms');
-    emit(AlarmLoading());
+    try {
+      AppLogger.info('🔄 BLoC: Loading alarms...');
 
-    final result = await getAlarms(const NoParams());
+      // Only show loading on first load
+      if (state is! AlarmLoaded) {
+        emit(AlarmLoading());
+      }
 
-    result.fold(
-      (failure) {
-        AppLogger.error('BLoC: Failed to load alarms');
-        emit(AlarmError(failure.message));
-      },
-      (alarms) {
-        AppLogger.info('BLoC: ${alarms.length} alarms loaded');
+      // Get alarms
+      final alarmsResult = await getAlarms(const NoParams());
 
-        // Also load user location
-        _loadLocationForState(emit, alarms);
-      },
-    );
-  }
+      // Check for errors
+      if (alarmsResult.isLeft()) {
+        final failure = alarmsResult.fold((l) => l, (r) => null);
+        AppLogger.error('❌ BLoC: Failed to load alarms');
+        if (!emit.isDone) {
+          emit(AlarmError(failure?.message ?? 'Failed to load alarms'));
+        }
+        return;
+      }
 
-  Future<void> _loadLocationForState(
-    Emitter<AlarmState> emit,
-    List<AlarmEntity> alarms,
-  ) async {
-    final locationResult = await getUserLocation(const NoParams());
+      // Extract alarms
+      final alarms = alarmsResult.getOrElse(() => <AlarmEntity>[]);
+      AppLogger.info('✅ BLoC: Loaded ${alarms.length} alarms');
 
-    locationResult.fold(
-      (failure) {
-        emit(AlarmLoaded(alarms: alarms, userLocation: 'Add your location'));
-      },
-      (location) {
-        emit(
-          AlarmLoaded(
-            alarms: alarms,
-            userLocation: location ?? 'Add your location',
-          ),
-        );
-      },
-    );
+      // Get location
+      final locationResult = await getSavedLocation(const NoParams());
+
+      String userLocation = 'Add your location';
+
+      if (locationResult.isRight()) {
+        final locationEntity = locationResult.getOrElse(() => null);
+        if (locationEntity != null) {
+          userLocation = locationEntity.address;
+          AppLogger.info('📍 BLoC: Location: $userLocation');
+        }
+      }
+
+      // Emit loaded state
+      if (!emit.isDone) {
+        emit(AlarmLoaded(alarms: alarms, userLocation: userLocation));
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ BLoC: Exception - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+
+      if (!emit.isDone) {
+        emit(AlarmError('Failed to load alarms: $e'));
+      }
+    }
   }
 
   Future<void> _onLoadUserLocation(
     LoadUserLocationEvent event,
     Emitter<AlarmState> emit,
   ) async {
-    final result = await getUserLocation(const NoParams());
+    if (state is! AlarmLoaded) return;
 
-    if (state is AlarmLoaded) {
+    try {
       final currentState = state as AlarmLoaded;
+      final result = await getSavedLocation(const NoParams());
 
-      result.fold(
-        (failure) {
-          emit(currentState.copyWith(userLocation: 'Add your location'));
-        },
-        (location) {
-          emit(
-            currentState.copyWith(
-              userLocation: location ?? 'Add your location',
-            ),
-          );
-        },
-      );
+      if (!emit.isDone) {
+        final userLocation = result.isRight()
+            ? result.getOrElse(() => null)?.address ?? 'Add your location'
+            : 'Add your location';
+
+        emit(currentState.copyWith(userLocation: userLocation));
+      }
+    } catch (e) {
+      AppLogger.error('❌ BLoC: Exception loading location - $e');
     }
   }
 
@@ -104,92 +113,132 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
     AddAlarmEvent event,
     Emitter<AlarmState> emit,
   ) async {
-    AppLogger.info('BLoC: Adding alarm at ${event.time.format}');
+    try {
+      final formattedTime =
+          '${event.time.hour.toString().padLeft(2, '0')}:${event.time.minute.toString().padLeft(2, '0')}';
+      AppLogger.info('➕ BLoC: Adding alarm at $formattedTime');
 
-    final now = DateTime.now();
-    var alarmDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      event.time.hour,
-      event.time.minute,
-    );
+      final now = DateTime.now();
+      var alarmDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        event.time.hour,
+        event.time.minute,
+      );
 
-    if (alarmDateTime.isBefore(now)) {
-      alarmDateTime = alarmDateTime.add(const Duration(days: 1));
-    }
+      if (alarmDateTime.isBefore(now)) {
+        alarmDateTime = alarmDateTime.add(const Duration(days: 1));
+      }
 
-    final newAlarm = AlarmEntity(
-      id: DateTime.now().millisecondsSinceEpoch % 10000000,
-      alarmDateTime: alarmDateTime,
-    );
+      final newAlarm = AlarmEntity(
+        id: DateTime.now().millisecondsSinceEpoch,
+        alarmDateTime: alarmDateTime,
+        isActive: true,
+      );
 
-    final result = await addAlarm(AddAlarmParams(alarm: newAlarm));
+      AppLogger.info('📝 BLoC: Saving alarm ID: ${newAlarm.id}');
 
-    result.fold(
-      (failure) {
-        AppLogger.error('BLoC: Failed to add alarm');
-        emit(AlarmError(failure.message));
-      },
-      (_) {
-        AppLogger.info('BLoC: Alarm added successfully');
-        // Reload alarms
+      final result = await addAlarm(AddAlarmParams(alarm: newAlarm));
+
+      if (result.isLeft()) {
+        final failure = result.fold((l) => l, (r) => null);
+        AppLogger.error('❌ BLoC: Failed to add alarm - ${failure?.message}');
+        if (!emit.isDone) {
+          emit(AlarmError(failure?.message ?? 'Failed to add alarm'));
+        }
+      } else {
+        AppLogger.info('✅ BLoC: Alarm added, reloading...');
+        // Wait a bit before reloading to ensure data is saved
+        await Future.delayed(const Duration(milliseconds: 100));
         add(LoadAlarmsEvent());
-      },
-    );
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ BLoC: Exception adding alarm - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+
+      if (!emit.isDone) {
+        emit(AlarmError('Failed to add alarm: $e'));
+      }
+    }
   }
 
   Future<void> _onDeleteAlarm(
     DeleteAlarmEvent event,
     Emitter<AlarmState> emit,
   ) async {
-    AppLogger.info('BLoC: Deleting alarm ${event.id}');
+    try {
+      AppLogger.info('🗑️ BLoC: Deleting alarm ${event.id}');
 
-    String? deletedTime;
-    if (state is AlarmLoaded) {
-      final currentState = state as AlarmLoaded;
-      final alarm = currentState.alarms.firstWhere((a) => a.id == event.id);
-      deletedTime = alarm.time;
-    }
-
-    final result = await deleteAlarm(DeleteAlarmParams(id: event.id));
-
-    result.fold(
-      (failure) {
-        AppLogger.error('BLoC: Failed to delete alarm');
-        emit(AlarmError(failure.message));
-      },
-      (_) {
-        AppLogger.info('BLoC: Alarm deleted successfully');
-        if (deletedTime != null) {
-          emit(AlarmDeleted(deletedTime));
+      String? deletedTime;
+      if (state is AlarmLoaded) {
+        final currentState = state as AlarmLoaded;
+        try {
+          final alarm = currentState.alarms.firstWhere((a) => a.id == event.id);
+          deletedTime = alarm.time;
+        } catch (e) {
+          AppLogger.warning('⚠️ BLoC: Alarm not found');
         }
-        // Reload alarms
+      }
+
+      final result = await deleteAlarm(DeleteAlarmParams(id: event.id));
+
+      if (result.isLeft()) {
+        final failure = result.fold((l) => l, (r) => null);
+        AppLogger.error('❌ BLoC: Failed to delete - ${failure?.message}');
+        if (!emit.isDone) {
+          emit(AlarmError(failure?.message ?? 'Failed to delete alarm'));
+        }
+      } else {
+        AppLogger.info('✅ BLoC: Alarm deleted');
+
+        if (deletedTime != null && !emit.isDone) {
+          emit(AlarmDeleted(deletedTime));
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+
         add(LoadAlarmsEvent());
-      },
-    );
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ BLoC: Exception - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+
+      if (!emit.isDone) {
+        emit(AlarmError('Failed to delete alarm: $e'));
+      }
+    }
   }
 
   Future<void> _onToggleAlarm(
     ToggleAlarmEvent event,
     Emitter<AlarmState> emit,
   ) async {
-    AppLogger.info('BLoC: Toggling alarm ${event.id} to ${event.isActive}');
+    try {
+      AppLogger.info(
+        '🔄 BLoC: Toggling alarm ${event.id} to ${event.isActive}',
+      );
 
-    final result = await toggleAlarm(
-      ToggleAlarmParams(id: event.id, isActive: event.isActive),
-    );
+      final result = await toggleAlarm(
+        ToggleAlarmParams(id: event.id, isActive: event.isActive),
+      );
 
-    result.fold(
-      (failure) {
-        AppLogger.error('BLoC: Failed to toggle alarm');
-        emit(AlarmError(failure.message));
-      },
-      (_) {
-        AppLogger.info('BLoC: Alarm toggled successfully');
-        // Reload alarms
+      if (result.isLeft()) {
+        final failure = result.fold((l) => l, (r) => null);
+        AppLogger.error('❌ BLoC: Failed to toggle - ${failure?.message}');
+        if (!emit.isDone) {
+          emit(AlarmError(failure?.message ?? 'Failed to toggle alarm'));
+        }
+      } else {
+        AppLogger.info('✅ BLoC: Alarm toggled');
         add(LoadAlarmsEvent());
-      },
-    );
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ BLoC: Exception - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+
+      if (!emit.isDone) {
+        emit(AlarmError('Failed to toggle alarm: $e'));
+      }
+    }
   }
 }

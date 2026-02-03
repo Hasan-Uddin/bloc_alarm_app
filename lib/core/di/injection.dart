@@ -6,7 +6,6 @@ import 'package:alarm_app/features/alarms/domain/repositories/alarm_repository.d
 import 'package:alarm_app/features/alarms/domain/usecases/add_alarm.dart';
 import 'package:alarm_app/features/alarms/domain/usecases/delete_alarm.dart';
 import 'package:alarm_app/features/alarms/domain/usecases/get_alarms.dart';
-import 'package:alarm_app/features/alarms/domain/usecases/get_user_location.dart';
 import 'package:alarm_app/features/alarms/domain/usecases/toggle_alarm.dart';
 import 'package:alarm_app/features/alarms/presentation/bloc/alarm_bloc.dart';
 import 'package:alarm_app/features/location/data/datasources/location_local_datasource.dart';
@@ -22,7 +21,6 @@ import 'package:alarm_app/helpers/logger.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../networks/dio_client.dart';
 import '../../networks/network_info.dart';
@@ -152,7 +150,6 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton(() => AddAlarm(getIt()));
   getIt.registerLazySingleton(() => DeleteAlarm(getIt()));
   getIt.registerLazySingleton(() => GetAlarms(getIt()));
-  getIt.registerLazySingleton(() => GetUserLocation(getIt()));
   getIt.registerLazySingleton(() => ToggleAlarm(getIt()));
 
   // ============== BLoCs ==============
@@ -170,7 +167,7 @@ Future<void> initializeDependencies() async {
       addAlarm: getIt(),
       deleteAlarm: getIt(),
       toggleAlarm: getIt(),
-      getUserLocation: getIt(),
+      getSavedLocation: getIt(),
     ),
   );
 
