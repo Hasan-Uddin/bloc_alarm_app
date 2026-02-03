@@ -1,3 +1,4 @@
+import 'package:alarm_app/features/location/presentation/pages/location_screen.dart';
 import 'package:flutter/material.dart';
 import 'constants/app_routes.dart';
 import 'features/notes/domain/entities/note.dart';
@@ -10,32 +11,25 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.onboarding:
-        return MaterialPageRoute(
-          builder: (_) => const OnboardingPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const OnboardingPage());
+
+      case AppRoutes.locationScreen:
+        return MaterialPageRoute(builder: (_) => const LocationScreen());
 
       case AppRoutes.notesList:
-        return MaterialPageRoute(
-          builder: (_) => const NotesListPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const NotesListPage());
 
       case AppRoutes.noteCreate:
-        return MaterialPageRoute(
-          builder: (_) => const NoteFormPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const NoteFormPage());
 
       case AppRoutes.noteEdit:
         final note = settings.arguments as Note?;
-        return MaterialPageRoute(
-          builder: (_) => NoteFormPage(note: note),
-        );
+        return MaterialPageRoute(builder: (_) => NoteFormPage(note: note));
 
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(
-              child: Text('No route defined for ${settings.name}'),
-            ),
+            body: Center(child: Text('No route defined for ${settings.name}')),
           ),
         );
     }
