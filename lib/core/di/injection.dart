@@ -1,5 +1,14 @@
-// Location imports
 import 'package:alarm_app/core/storage/local_storage.dart';
+import 'package:alarm_app/features/alarms/data/datasources/alarm_local_datasource.dart';
+import 'package:alarm_app/features/alarms/data/models/alarm_model.dart';
+import 'package:alarm_app/features/alarms/data/repositories/alarm_repository_impl.dart';
+import 'package:alarm_app/features/alarms/domain/repositories/alarm_repository.dart';
+import 'package:alarm_app/features/alarms/domain/usecases/add_alarm.dart';
+import 'package:alarm_app/features/alarms/domain/usecases/delete_alarm.dart';
+import 'package:alarm_app/features/alarms/domain/usecases/get_alarms.dart';
+import 'package:alarm_app/features/alarms/domain/usecases/get_user_location.dart';
+import 'package:alarm_app/features/alarms/domain/usecases/toggle_alarm.dart';
+import 'package:alarm_app/features/alarms/presentation/bloc/alarm_bloc.dart';
 import 'package:alarm_app/features/location/data/datasources/location_local_datasource.dart';
 import 'package:alarm_app/features/location/data/models/location_model.dart';
 import 'package:alarm_app/features/location/data/repositories/location_repository_impl.dart';
@@ -13,12 +22,10 @@ import 'package:alarm_app/helpers/logger.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../networks/dio_client.dart';
 import '../../networks/network_info.dart';
 
-// Onboarding imports
 import '../../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import '../../features/onboarding/domain/repositories/onboarding_repository.dart';
@@ -26,7 +33,6 @@ import '../../features/onboarding/domain/usecases/check_onboarding_status.dart';
 import '../../features/onboarding/domain/usecases/complete_onboarding.dart';
 import '../../features/onboarding/presentation/bloc/onboarding_bloc.dart';
 
-// Notes imports
 import '../../features/notes/data/datasources/note_local_datasource.dart';
 import '../../features/notes/data/datasources/note_remote_datasource.dart';
 import '../../features/notes/data/repositories/note_repository_impl.dart';
@@ -47,11 +53,15 @@ final getIt = GetIt.instance;
 Future<void> initializeDependencies() async {
   // ============== Local Storage (Hive + SharedPreferences) ==============
 
+  // ============< Open Boxes >===============
   // Open Location Hive Box
   await LocalStorage.openBox<LocationModel>(
     LocationLocalDataSourceImpl.LOCATION_BOX,
   );
   AppLogger.info('Location box opened');
+
+  await LocalStorage.openBox<AlarmModel>(AlarmLocalDataSourceImpl.ALARM_BOX);
+  AppLogger.info('Alarm box opened');
 
   // ============== External Dependencies ==============
 
@@ -152,6 +162,35 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory(
     () => NoteFormBloc(createNote: getIt(), updateNote: getIt()),
+  );
+
+  // ============== Alarm Feature ==============
+  // BLoC
+  getIt.registerFactory(
+    () => AlarmBloc(
+      getAlarms: getIt(),
+      addAlarm: getIt(),
+      deleteAlarm: getIt(),
+      toggleAlarm: getIt(),
+      getUserLocation: getIt(),
+    ),
+  );
+
+  // Use cases
+  getIt.registerLazySingleton(() => GetAlarms(getIt()));
+  getIt.registerLazySingleton(() => AddAlarm(getIt()));
+  getIt.registerLazySingleton(() => DeleteAlarm(getIt()));
+  getIt.registerLazySingleton(() => ToggleAlarm(getIt()));
+  getIt.registerLazySingleton(() => GetUserLocation(getIt()));
+
+  // Repository
+  getIt.registerLazySingleton<AlarmRepository>(
+    () => AlarmRepositoryImpl(localDataSource: getIt()),
+  );
+
+  // Data sources
+  getIt.registerLazySingleton<AlarmLocalDataSource>(
+    () => AlarmLocalDataSourceImpl(),
   );
 
   AppLogger.info('Dependency injection setup completed');
