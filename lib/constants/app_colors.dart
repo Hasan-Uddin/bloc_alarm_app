@@ -7,9 +7,9 @@ class AppColors {
   AppColors._();
 
   // Primary Colors
-  static const Color primary = Color(0xFF6C5CE7);
-  static const Color primaryDark = Color(0xFF5849C9);
-  static const Color primaryLight = Color(0xFF8B7FF4);
+  static const Color primary = Color.fromARGB(255, 82, 0, 255);
+  static const Color primaryDark = Color.fromARGB(166, 81, 0, 255);
+  static const Color primaryLight = Color.fromARGB(94, 81, 0, 255);
 
   // Secondary Colors
   static const Color secondary = Color(0xFFFF6B9D);
@@ -27,8 +27,8 @@ class AppColors {
   static const Color surfaceDark = Color(0xFF2C2C2C);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF2D3436);
-  static const Color textSecondary = Color(0xFF636E72);
+  static const Color textPrimary = Color.fromARGB(255, 255, 255, 255);
+  static const Color textSecondary = Color.fromARGB(255, 230, 230, 230);
   static const Color textHint = Color(0xFFB2BEC3);
   static const Color textWhite = Color(0xFFFFFFFF);
 
@@ -42,10 +42,11 @@ class AppColors {
   static const Color divider = Color(0xFFDFE6E9);
   static const Color border = Color(0xFFB2BEC3);
   static const Color shadow = Color(0x1A000000);
+  static const Color transparent = Color.fromARGB(0, 255, 255, 255);
 
   // Gradient Colors (for modern UI effects)
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primary, primaryLight],
+    colors: [Color.fromARGB(248, 11, 0, 36), transparent],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
