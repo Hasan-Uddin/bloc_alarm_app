@@ -1,3 +1,5 @@
+import 'package:alarm_app/features/alarms/data/models/alarm_model.dart';
+import 'package:alarm_app/features/location/data/models/location_model.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
@@ -27,6 +29,8 @@ void main() async {
   //   flutter pub run build_runner build
   // This generates the 'note_model.g.dart' file from the @HiveType annotation
   Hive.registerAdapter(NoteModelAdapter());
+  Hive.registerAdapter(LocationModelAdapter());
+  Hive.registerAdapter(AlarmModelAdapter());
   AppLogger.info('Hive type adapters registered');
 
   // Initialize dependency injection (GetIt)

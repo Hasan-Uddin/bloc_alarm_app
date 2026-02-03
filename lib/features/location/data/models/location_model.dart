@@ -3,7 +3,7 @@ import '../../domain/entities/location_entity.dart';
 
 part 'location_model.g.dart'; // Generated file for Hive TypeAdapter
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 1)
 class LocationModel extends LocationEntity {
   @HiveField(0)
   final String addressField;

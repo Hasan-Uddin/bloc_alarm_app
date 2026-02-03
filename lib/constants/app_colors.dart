@@ -46,9 +46,9 @@ class AppColors {
 
   // Gradient Colors (for modern UI effects)
   static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
     colors: [Color.fromARGB(248, 11, 0, 36), transparent],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
   );
 
   static const LinearGradient secondaryGradient = LinearGradient(

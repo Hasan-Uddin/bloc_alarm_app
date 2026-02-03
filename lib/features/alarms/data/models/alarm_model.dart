@@ -3,7 +3,7 @@ import '../../domain/entities/alarm_entity.dart';
 
 part 'alarm_model.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 2)
 class AlarmModel extends AlarmEntity {
   @HiveField(0)
   final int idField;
@@ -36,7 +36,7 @@ class AlarmModel extends AlarmEntity {
     return AlarmModel(
       idField: json['id'] as int,
       alarmDateTimeField: DateTime.parse(json['alarmDateTime'] as String),
-      isActiveField: json['isActive'] as bool,
+      isActiveField: json['isActive'] as bool? ?? true,
     );
   }
 
@@ -54,5 +54,10 @@ class AlarmModel extends AlarmEntity {
       alarmDateTimeField: alarmDateTime ?? alarmDateTimeField,
       isActiveField: isActive ?? isActiveField,
     );
+  }
+
+  @override
+  String toString() {
+    return 'AlarmModel(id: $idField, time: $time, isActive: $isActiveField)';
   }
 }

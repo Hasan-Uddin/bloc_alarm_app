@@ -8,7 +8,7 @@ part of 'alarm_model.dart';
 
 class AlarmModelAdapter extends TypeAdapter<AlarmModel> {
   @override
-  final int typeId = 1;
+  final int typeId = 2;
 
   @override
   AlarmModel read(BinaryReader reader) {

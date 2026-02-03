@@ -69,7 +69,7 @@ class _LocationScreenContent extends StatelessWidget {
 
   /// Navigate to home screen
   void _navigateToHome(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed(AppRoutes.notesList);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.alarmHome);
   }
 
   /// Show error message

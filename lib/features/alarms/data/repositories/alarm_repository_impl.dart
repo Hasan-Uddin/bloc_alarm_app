@@ -3,7 +3,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../helpers/logger.dart';
 import '../../domain/entities/alarm_entity.dart';
 import '../../domain/repositories/alarm_repository.dart';
-import '../datasources/alarm_local_datasource.dart';
+import '../datasources/alarm_local_datasource.dart' hide CacheException;
 import '../models/alarm_model.dart';
 
 class AlarmRepositoryImpl implements AlarmRepository {
@@ -17,22 +17,28 @@ class AlarmRepositoryImpl implements AlarmRepository {
       AppLogger.info('Repository: Getting alarms');
       final alarms = await localDataSource.getAlarms();
       return Right(alarms);
+    } on CacheException catch (e) {
+      AppLogger.error('Repository: Cache error getting alarms - ${e.message}');
+      return Left(CacheFailure(e.message));
     } catch (e) {
       AppLogger.error('Repository: Error getting alarms - $e');
-      return Left(CacheFailure());
+      return Left(CacheFailure('Failed to load alarms: $e'));
     }
   }
 
   @override
   Future<Either<Failure, void>> addAlarm(AlarmEntity alarm) async {
     try {
-      AppLogger.info('Repository: Adding alarm');
+      AppLogger.info('Repository: Adding alarm at ${alarm.time}');
       final alarmModel = AlarmModel.fromEntity(alarm);
       await localDataSource.addAlarm(alarmModel);
       return const Right(null);
+    } on CacheException catch (e) {
+      AppLogger.error('Repository: Cache error adding alarm - ${e.message}');
+      return Left(CacheFailure(e.message));
     } catch (e) {
       AppLogger.error('Repository: Error adding alarm - $e');
-      return Left(CacheFailure());
+      return Left(CacheFailure('Failed to add alarm: $e'));
     }
   }
 
@@ -42,9 +48,12 @@ class AlarmRepositoryImpl implements AlarmRepository {
       AppLogger.info('Repository: Deleting alarm $id');
       await localDataSource.deleteAlarm(id);
       return const Right(null);
+    } on CacheException catch (e) {
+      AppLogger.error('Repository: Cache error deleting alarm - ${e.message}');
+      return Left(CacheFailure(e.message));
     } catch (e) {
       AppLogger.error('Repository: Error deleting alarm - $e');
-      return Left(CacheFailure());
+      return Left(CacheFailure('Failed to delete alarm: $e'));
     }
   }
 
@@ -56,16 +65,19 @@ class AlarmRepositoryImpl implements AlarmRepository {
       final alarms = await localDataSource.getAlarms();
       final alarmIndex = alarms.indexWhere((a) => a.id == id);
 
-      if (alarmIndex != -1) {
-        final updatedAlarm = alarms[alarmIndex].copyWith(isActive: isActive);
-        await localDataSource.updateAlarm(updatedAlarm);
-        return const Right(null);
+      if (alarmIndex == -1) {
+        return Left(CacheFailure('Alarm not found'));
       }
 
-      return Left(CacheFailure());
+      final updatedAlarm = alarms[alarmIndex].copyWith(isActive: isActive);
+      await localDataSource.updateAlarm(updatedAlarm);
+      return const Right(null);
+    } on CacheException catch (e) {
+      AppLogger.error('Repository: Cache error toggling alarm - ${e.message}');
+      return Left(CacheFailure(e.message));
     } catch (e) {
       AppLogger.error('Repository: Error toggling alarm - $e');
-      return Left(CacheFailure());
+      return Left(CacheFailure('Failed to toggle alarm: $e'));
     }
   }
 
@@ -77,7 +89,7 @@ class AlarmRepositoryImpl implements AlarmRepository {
       return Right(location);
     } catch (e) {
       AppLogger.error('Repository: Error getting user location - $e');
-      return Left(CacheFailure());
+      return Left(CacheFailure('Failed to get location'));
     }
   }
 }
