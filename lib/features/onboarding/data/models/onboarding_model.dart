@@ -1,3 +1,4 @@
+import 'package:alarm_app/constants/app_strings.dart';
 import 'package:equatable/equatable.dart';
 
 // Onboarding page model
@@ -18,22 +19,22 @@ class OnboardingModel extends Equatable {
   // Static list of onboarding pages
   static List<OnboardingModel> onboardingPages = [
     const OnboardingModel(
-      title: 'Welcome to Flutter Clean App',
+      title: 'Discover the world, one journey at a time.',
       description:
-          'A production-ready template with clean architecture, separation of concerns, and industry best practices.',
-      videoPath: 'assets/images/onboarding1.png',
+          'From hidden gems to iconic destinations, we make travel simple, inspiring, and unforgettable. Start your next adventure today.',
+      videoPath: AppStrings.onBoardingVid_1,
     ),
     const OnboardingModel(
-      title: 'Powerful Architecture',
+      title: 'Explore new horizons, one step at a time.',
       description:
-          'Built with BLoC pattern, dependency injection, Hive for offline storage, and Dio for seamless API integration.',
-      videoPath: 'assets/images/onboarding2.png',
+          'Every trip holds a story waiting to be lived. Let us guide you to experiences that inspire, connect, and last a lifetime.',
+      videoPath: AppStrings.onBoardingVid_2,
     ),
     const OnboardingModel(
-      title: 'Ready to Build',
+      title: 'See the beauty, one journey at a time.',
       description:
-          'Start building your features with a solid foundation. Example Notes feature included to demonstrate CRUD operations.',
-      videoPath: 'assets/images/onboarding3.png',
+          'Travel made simple and exciting—discover places you’ll love and moments you’ll never forget.',
+      videoPath: AppStrings.onBoardingVid_3,
     ),
   ];
 }
