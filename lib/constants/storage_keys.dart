@@ -8,6 +8,7 @@ class StorageKeys {
   static const String notesBox = 'notes_box';
   static const String settingsBox = 'settings_box';
   static const String cacheBox = 'cache_box';
+  static const String alarmsBox = 'alarms_box';
 
   // SharedPreferences Keys
   static const String isOnboardingCompleted = 'is_onboarding_completed';
@@ -20,4 +21,5 @@ class StorageKeys {
   // Hive Type IDs (for TypeAdapter registration)
   static const int noteTypeId = 0;
   static const int userTypeId = 1;
+  static const int alarmTypeId = 2;
 }

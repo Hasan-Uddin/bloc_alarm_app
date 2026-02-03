@@ -168,13 +168,7 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent> {
     if (_hasError) {
       return Scaffold(
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF0B0024), Color(0xFF082257)],
-            ),
-          ),
+          decoration: BoxDecoration(gradient: AppColors.primaryGradient),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
