@@ -1,5 +1,19 @@
+// Location imports
+import 'package:alarm_app/core/storage/local_storage.dart';
+import 'package:alarm_app/features/location/data/datasources/location_local_datasource.dart';
+import 'package:alarm_app/features/location/data/models/location_model.dart';
+import 'package:alarm_app/features/location/data/repositories/location_repository_impl.dart';
+import 'package:alarm_app/features/location/domain/repositories/location_repository.dart';
+import 'package:alarm_app/features/location/domain/usecases/delete_location.dart';
+import 'package:alarm_app/features/location/domain/usecases/get_current_location.dart';
+import 'package:alarm_app/features/location/domain/usecases/get_saved_location.dart';
+import 'package:alarm_app/features/location/domain/usecases/save_location.dart';
+import 'package:alarm_app/features/location/presentation/bloc/location_bloc.dart';
+import 'package:alarm_app/helpers/logger.dart';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../networks/dio_client.dart';
 import '../../networks/network_info.dart';
@@ -31,33 +45,37 @@ final getIt = GetIt.instance;
 // Initialize all dependencies
 // This should be called before running the app
 Future<void> initializeDependencies() async {
+  // ============== Local Storage (Hive + SharedPreferences) ==============
+
+  // Open Location Hive Box
+  await LocalStorage.openBox<LocationModel>(
+    LocationLocalDataSourceImpl.LOCATION_BOX,
+  );
+  AppLogger.info('Location box opened');
+
   // ============== External Dependencies ==============
 
-  // SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 
-  // Connectivity
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
   // ============== Core ==============
 
-  // Network Info
   getIt.registerLazySingleton<NetworkInfo>(
     () => NetworkInfo(getIt<Connectivity>()),
   );
 
-  // Initialize Dio Client
   DioClient.init();
 
   // ============== Data Sources ==============
 
-  // Onboarding Data Source
+  // Onboarding
   getIt.registerLazySingleton<OnboardingLocalDataSource>(
     () => OnboardingLocalDataSourceImpl(getIt<SharedPreferences>()),
   );
 
-  // Notes Data Sources
+  // Notes
   getIt.registerLazySingleton<NoteLocalDataSource>(
     () => NoteLocalDataSourceImpl(),
   );
@@ -65,14 +83,17 @@ Future<void> initializeDependencies() async {
     () => NoteRemoteDataSourceImpl(),
   );
 
+  // Location
+  getIt.registerLazySingleton<LocationLocalDataSource>(
+    () => LocationLocalDataSourceImpl(),
+  );
+
   // ============== Repositories ==============
 
-  // Onboarding Repository
   getIt.registerLazySingleton<OnboardingRepository>(
     () => OnboardingRepositoryImpl(getIt<OnboardingLocalDataSource>()),
   );
 
-  // Notes Repository
   getIt.registerLazySingleton<NoteRepository>(
     () => NoteRepositoryImpl(
       localDataSource: getIt<NoteLocalDataSource>(),
@@ -81,9 +102,13 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  getIt.registerLazySingleton<LocationRepository>(
+    () => LocationRepositoryImpl(localDataSource: getIt()),
+  );
+
   // ============== Use Cases ==============
 
-  // Onboarding Use Cases
+  // Onboarding
   getIt.registerLazySingleton(
     () => CheckOnboardingStatus(getIt<OnboardingRepository>()),
   );
@@ -91,7 +116,13 @@ Future<void> initializeDependencies() async {
     () => CompleteOnboarding(getIt<OnboardingRepository>()),
   );
 
-  // Notes Use Cases
+  // Location
+  getIt.registerLazySingleton(() => GetCurrentLocation(getIt()));
+  getIt.registerLazySingleton(() => GetSavedLocation(getIt()));
+  getIt.registerLazySingleton(() => SaveLocation(getIt()));
+  getIt.registerLazySingleton(() => DeleteLocation(getIt()));
+
+  // Notes
   getIt.registerLazySingleton(() => GetNotes(getIt<NoteRepository>()));
   getIt.registerLazySingleton(() => CreateNote(getIt<NoteRepository>()));
   getIt.registerLazySingleton(() => UpdateNote(getIt<NoteRepository>()));
@@ -99,25 +130,31 @@ Future<void> initializeDependencies() async {
 
   // ============== BLoCs ==============
 
-  // Onboarding BLoC
   getIt.registerFactory(
     () => OnboardingBloc(
-      checkOnboardingStatus: getIt<CheckOnboardingStatus>(),
-      completeOnboarding: getIt<CompleteOnboarding>(),
+      checkOnboardingStatus: getIt(),
+      completeOnboarding: getIt(),
     ),
   );
 
-  // Notes BLoCs
   getIt.registerFactory(
-    () =>
-        NotesBloc(getNotes: getIt<GetNotes>(), deleteNote: getIt<DeleteNote>()),
-  );
-  getIt.registerFactory(
-    () => NoteFormBloc(
-      createNote: getIt<CreateNote>(),
-      updateNote: getIt<UpdateNote>(),
+    () => LocationBloc(
+      getCurrentLocation: getIt(),
+      getSavedLocation: getIt(),
+      saveLocation: getIt(),
+      deleteLocation: getIt(),
     ),
   );
+
+  getIt.registerFactory(
+    () => NotesBloc(getNotes: getIt(), deleteNote: getIt()),
+  );
+
+  getIt.registerFactory(
+    () => NoteFormBloc(createNote: getIt(), updateNote: getIt()),
+  );
+
+  AppLogger.info('Dependency injection setup completed');
 }
 
 // Reset dependencies (useful for testing)
