@@ -99,6 +99,11 @@ Future<void> initializeDependencies() async {
     () => LocationLocalDataSourceImpl(),
   );
 
+  // Alarm
+  getIt.registerLazySingleton<AlarmLocalDataSource>(
+    () => AlarmLocalDataSourceImpl(),
+  );
+
   // ============== Repositories ==============
 
   getIt.registerLazySingleton<OnboardingRepository>(
@@ -115,6 +120,10 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<LocationRepository>(
     () => LocationRepositoryImpl(localDataSource: getIt()),
+  );
+
+  getIt.registerLazySingleton<AlarmRepository>(
+    () => AlarmRepositoryImpl(localDataSource: getIt()),
   );
 
   // ============== Use Cases ==============
@@ -139,12 +148,29 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton(() => UpdateNote(getIt<NoteRepository>()));
   getIt.registerLazySingleton(() => DeleteNote(getIt<NoteRepository>()));
 
+  // Alarm
+  getIt.registerLazySingleton(() => AddAlarm(getIt()));
+  getIt.registerLazySingleton(() => DeleteAlarm(getIt()));
+  getIt.registerLazySingleton(() => GetAlarms(getIt()));
+  getIt.registerLazySingleton(() => GetUserLocation(getIt()));
+  getIt.registerLazySingleton(() => ToggleAlarm(getIt()));
+
   // ============== BLoCs ==============
 
   getIt.registerFactory(
     () => OnboardingBloc(
       checkOnboardingStatus: getIt(),
       completeOnboarding: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => AlarmBloc(
+      getAlarms: getIt(),
+      addAlarm: getIt(),
+      deleteAlarm: getIt(),
+      toggleAlarm: getIt(),
+      getUserLocation: getIt(),
     ),
   );
 
@@ -163,35 +189,6 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory(
     () => NoteFormBloc(createNote: getIt(), updateNote: getIt()),
-  );
-
-  // ============== Alarm Feature ==============
-  // BLoC
-  getIt.registerFactory(
-    () => AlarmBloc(
-      getAlarms: getIt(),
-      addAlarm: getIt(),
-      deleteAlarm: getIt(),
-      toggleAlarm: getIt(),
-      getUserLocation: getIt(),
-    ),
-  );
-
-  // Use cases
-  getIt.registerLazySingleton(() => GetAlarms(getIt()));
-  getIt.registerLazySingleton(() => AddAlarm(getIt()));
-  getIt.registerLazySingleton(() => DeleteAlarm(getIt()));
-  getIt.registerLazySingleton(() => ToggleAlarm(getIt()));
-  getIt.registerLazySingleton(() => GetUserLocation(getIt()));
-
-  // Repository
-  getIt.registerLazySingleton<AlarmRepository>(
-    () => AlarmRepositoryImpl(localDataSource: getIt()),
-  );
-
-  // Data sources
-  getIt.registerLazySingleton<AlarmLocalDataSource>(
-    () => AlarmLocalDataSourceImpl(),
   );
 
   AppLogger.info('Dependency injection setup completed');
