@@ -107,7 +107,7 @@ lib/
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/Hasan-Uddin/bloc_alarm_app.git
-   cd alarm_app
+   cd bloc_alarm_app
 
 3. **Generate Hive type adapters:**
    ```bash
