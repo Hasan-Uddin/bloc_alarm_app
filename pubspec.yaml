@@ -67,6 +67,12 @@ dependencies:
   logger: ^2.5.0
   dartz: ^0.10.1
   hive_generator: ^2.0.1
+  
+  # Alarm feature dependencies
+  flutter_background_service: ^5.0.11
+  flutter_local_notifications: ^18.0.1
+  permission_handler: ^11.3.1
+  timezone: ^0.9.4
 
   # Fonts
   google_fonts: ^8.0.0
