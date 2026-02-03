@@ -5,22 +5,23 @@ class AppStrings {
   AppStrings._();
 
   // App Info
-  static const String appName = 'Flutter Clean App';
-  static const String appTagline = 'Built with Clean Architecture & Best Practices';
+  static const String appName = 'Alarm App';
+  static const String appTagline =
+      'Built with Clean Architecture & Best Practices';
 
   // Onboarding
   static const String onboardingTitle1 = 'Welcome to Clean Architecture';
   static const String onboardingDescription1 =
       'Experience a well-structured Flutter app with separation of concerns and industry best practices.';
-  
+
   static const String onboardingTitle2 = 'Powerful Features';
   static const String onboardingDescription2 =
       'Built with BLoC for state management, Hive for local storage, and Dio for seamless API integration.';
-  
+
   static const String onboardingTitle3 = 'Get Started';
   static const String onboardingDescription3 =
       'Create, update, and manage your notes effortlessly with offline support and real-time sync.';
-  
+
   static const String skip = 'Skip';
   static const String next = 'Next';
   static const String getStarted = 'Get Started';
@@ -35,9 +36,11 @@ class AppStrings {
   static const String save = 'Save';
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
-  static const String confirmDelete = 'Are you sure you want to delete this note?';
+  static const String confirmDelete =
+      'Are you sure you want to delete this note?';
   static const String noNotes = 'No notes yet';
-  static const String noNotesDescription = 'Tap the + button to create your first note';
+  static const String noNotesDescription =
+      'Tap the + button to create your first note';
   static const String searchNotes = 'Search notes...';
 
   // Common UI
@@ -52,7 +55,8 @@ class AppStrings {
   static const String required = 'This field is required';
   static const String invalidEmail = 'Please enter a valid email';
   static const String invalidPhone = 'Please enter a valid phone number';
-  static const String passwordTooShort = 'Password must be at least 8 characters';
+  static const String passwordTooShort =
+      'Password must be at least 8 characters';
   static const String passwordsDoNotMatch = 'Passwords do not match';
 
   // Error Messages
@@ -67,4 +71,10 @@ class AppStrings {
   static const String noteCreated = 'Note created successfully';
   static const String noteUpdated = 'Note updated successfully';
   static const String noteDeleted = 'Note deleted successfully';
+
+  // assets path
+  static const String onBoardingVid_1 = 'assets/videos/video_1.mp4';
+  static const String onBoardingVid_2 = 'assets/videos/video_2.mp4';
+  static const String onBoardingVid_3 = 'assets/videos/video_3.mp4';
+  static const String locationImage = 'assets/images/location_image.jpg';
 }
