@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../helpers/logger.dart';
@@ -38,15 +39,16 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
     try {
       AppLogger.info('🔄 BLoC: Loading alarms...');
 
-      // Only show loading on first load
-      if (state is! AlarmLoaded) {
+      // Only show loading spinner on first load, not on refresh
+      final shouldShowLoading = state is AlarmInitial || state is AlarmError;
+      if (shouldShowLoading) {
         emit(AlarmLoading());
       }
 
       // Get alarms
       final alarmsResult = await getAlarms(const NoParams());
 
-      // Check for errors
+      // Handle failure
       if (alarmsResult.isLeft()) {
         final failure = alarmsResult.fold((l) => l, (r) => null);
         AppLogger.error('❌ BLoC: Failed to load alarms');
@@ -57,25 +59,31 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
       }
 
       // Extract alarms
-      final alarms = alarmsResult.getOrElse(() => <AlarmEntity>[]);
+      final alarms = alarmsResult.fold((l) => <AlarmEntity>[], (r) => r);
+
       AppLogger.info('✅ BLoC: Loaded ${alarms.length} alarms');
+      for (var alarm in alarms) {
+        AppLogger.debug(
+          '   - ${alarm.time} (ID: ${alarm.id}, Active: ${alarm.isActive})',
+        );
+      }
 
       // Get location
       final locationResult = await getSavedLocation(const NoParams());
 
       String userLocation = 'Add your location';
-
       if (locationResult.isRight()) {
-        final locationEntity = locationResult.getOrElse(() => null);
+        final locationEntity = locationResult.fold((l) => null, (r) => r);
         if (locationEntity != null) {
           userLocation = locationEntity.address;
           AppLogger.info('📍 BLoC: Location: $userLocation');
         }
       }
 
-      // Emit loaded state
+      // Emit final state
       if (!emit.isDone) {
         emit(AlarmLoaded(alarms: alarms, userLocation: userLocation));
+        AppLogger.info('✅ BLoC: State emitted with ${alarms.length} alarms');
       }
     } catch (e, stackTrace) {
       AppLogger.error('❌ BLoC: Exception - $e');
@@ -99,7 +107,7 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
 
       if (!emit.isDone) {
         final userLocation = result.isRight()
-            ? result.getOrElse(() => null)?.address ?? 'Add your location'
+            ? result.fold((l) => null, (r) => r)?.address ?? 'Add your location'
             : 'Add your location';
 
         emit(currentState.copyWith(userLocation: userLocation));
@@ -147,12 +155,16 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
         if (!emit.isDone) {
           emit(AlarmError(failure?.message ?? 'Failed to add alarm'));
         }
-      } else {
-        AppLogger.info('✅ BLoC: Alarm added, reloading...');
-        // Wait a bit before reloading to ensure data is saved
-        await Future.delayed(const Duration(milliseconds: 100));
-        add(LoadAlarmsEvent());
+        return;
       }
+
+      AppLogger.info('✅ BLoC: Alarm added successfully');
+
+      // Small delay to ensure Hive write completes
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Reload alarms
+      add(LoadAlarmsEvent());
     } catch (e, stackTrace) {
       AppLogger.error('❌ BLoC: Exception adding alarm - $e');
       AppLogger.error('StackTrace: $stackTrace');
@@ -170,17 +182,22 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
     try {
       AppLogger.info('🗑️ BLoC: Deleting alarm ${event.id}');
 
+      // Get the alarm time before deleting (for snackbar)
       String? deletedTime;
       if (state is AlarmLoaded) {
         final currentState = state as AlarmLoaded;
         try {
           final alarm = currentState.alarms.firstWhere((a) => a.id == event.id);
           deletedTime = alarm.time;
+          AppLogger.info('🗑️ BLoC: Found alarm to delete: ${alarm.time}');
         } catch (e) {
-          AppLogger.warning('⚠️ BLoC: Alarm not found');
+          AppLogger.warning(
+            '⚠️ BLoC: Alarm ${event.id} not found in current state',
+          );
         }
       }
 
+      // Delete from repository
       final result = await deleteAlarm(DeleteAlarmParams(id: event.id));
 
       if (result.isLeft()) {
@@ -189,18 +206,25 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
         if (!emit.isDone) {
           emit(AlarmError(failure?.message ?? 'Failed to delete alarm'));
         }
-      } else {
-        AppLogger.info('✅ BLoC: Alarm deleted');
-
-        if (deletedTime != null && !emit.isDone) {
-          emit(AlarmDeleted(deletedTime));
-          await Future.delayed(const Duration(milliseconds: 300));
-        }
-
-        add(LoadAlarmsEvent());
+        return;
       }
+
+      AppLogger.info('✅ BLoC: Alarm deleted from storage');
+
+      // Emit deleted state for snackbar
+      if (deletedTime != null && !emit.isDone) {
+        emit(AlarmDeleted(deletedTime));
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      // Small delay to ensure Hive write completes
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Reload alarms
+      AppLogger.info('🔄 BLoC: Reloading alarms after delete...');
+      add(LoadAlarmsEvent());
     } catch (e, stackTrace) {
-      AppLogger.error('❌ BLoC: Exception - $e');
+      AppLogger.error('❌ BLoC: Exception deleting alarm - $e');
       AppLogger.error('StackTrace: $stackTrace');
 
       if (!emit.isDone) {
@@ -218,6 +242,7 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
         '🔄 BLoC: Toggling alarm ${event.id} to ${event.isActive}',
       );
 
+      // Perform toggle
       final result = await toggleAlarm(
         ToggleAlarmParams(id: event.id, isActive: event.isActive),
       );
@@ -228,12 +253,19 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
         if (!emit.isDone) {
           emit(AlarmError(failure?.message ?? 'Failed to toggle alarm'));
         }
-      } else {
-        AppLogger.info('✅ BLoC: Alarm toggled');
-        add(LoadAlarmsEvent());
+        return;
       }
+
+      AppLogger.info('✅ BLoC: Alarm toggled in storage');
+
+      // Small delay to ensure Hive write completes
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Reload alarms
+      AppLogger.info('🔄 BLoC: Reloading alarms after toggle...');
+      add(LoadAlarmsEvent());
     } catch (e, stackTrace) {
-      AppLogger.error('❌ BLoC: Exception - $e');
+      AppLogger.error('❌ BLoC: Exception toggling alarm - $e');
       AppLogger.error('StackTrace: $stackTrace');
 
       if (!emit.isDone) {

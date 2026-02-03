@@ -124,3 +124,24 @@ class ParsingException extends AppException {
     return ParsingException('Missing required field: $field');
   }
 }
+
+// Alarm related exceptions
+class AlarmDataSourceException extends AppException {
+  const AlarmDataSourceException(super.message);
+
+  factory AlarmDataSourceException.notFound() {
+    return const AlarmDataSourceException('Alarm not found');
+  }
+
+  factory AlarmDataSourceException.saveFailed() {
+    return const AlarmDataSourceException('Failed to save alarm');
+  }
+
+  factory AlarmDataSourceException.deleteFailed() {
+    return const AlarmDataSourceException('Failed to delete alarm');
+  }
+
+  factory AlarmDataSourceException.updateFailed() {
+    return const AlarmDataSourceException('Failed to update alarm');
+  }
+}

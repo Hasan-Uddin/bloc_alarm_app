@@ -1,9 +1,11 @@
+import 'package:alarm_app/core/error/exceptions.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../helpers/logger.dart';
 import '../../domain/entities/alarm_entity.dart';
 import '../../domain/repositories/alarm_repository.dart';
-import '../datasources/alarm_local_datasource.dart' hide CacheException;
+import '../datasources/alarm_local_datasource.dart'
+    hide AlarmDataSourceException;
 import '../models/alarm_model.dart';
 
 class AlarmRepositoryImpl implements AlarmRepository {
@@ -14,15 +16,17 @@ class AlarmRepositoryImpl implements AlarmRepository {
   @override
   Future<Either<Failure, List<AlarmEntity>>> getAlarms() async {
     try {
-      AppLogger.info('Repository: Getting alarms');
+      AppLogger.info('Repository: Getting alarms...');
       final alarms = await localDataSource.getAlarms();
+      AppLogger.info('Repository: Got ${alarms.length} alarms');
       return Right(alarms);
-    } on CacheException catch (e) {
-      AppLogger.error('Repository: Cache error getting alarms - ${e.message}');
+    } on AlarmDataSourceException catch (e) {
+      AppLogger.error('Repository: DataSource exception - ${e.message}');
       return Left(CacheFailure(e.message));
-    } catch (e) {
-      AppLogger.error('Repository: Error getting alarms - $e');
-      return Left(CacheFailure('Failed to load alarms: $e'));
+    } catch (e, stackTrace) {
+      AppLogger.error('Repository: Unexpected error - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+      return Left(CacheFailure('Failed to load alarms'));
     }
   }
 
@@ -32,13 +36,15 @@ class AlarmRepositoryImpl implements AlarmRepository {
       AppLogger.info('Repository: Adding alarm at ${alarm.time}');
       final alarmModel = AlarmModel.fromEntity(alarm);
       await localDataSource.addAlarm(alarmModel);
+      AppLogger.info('Repository: Alarm added');
       return const Right(null);
-    } on CacheException catch (e) {
-      AppLogger.error('Repository: Cache error adding alarm - ${e.message}');
+    } on AlarmDataSourceException catch (e) {
+      AppLogger.error('Repository: DataSource exception - ${e.message}');
       return Left(CacheFailure(e.message));
-    } catch (e) {
-      AppLogger.error('Repository: Error adding alarm - $e');
-      return Left(CacheFailure('Failed to add alarm: $e'));
+    } catch (e, stackTrace) {
+      AppLogger.error('Repository: Unexpected error - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+      return Left(CacheFailure('Failed to add alarm'));
     }
   }
 
@@ -47,13 +53,15 @@ class AlarmRepositoryImpl implements AlarmRepository {
     try {
       AppLogger.info('Repository: Deleting alarm $id');
       await localDataSource.deleteAlarm(id);
+      AppLogger.info('Repository: Alarm deleted successfully');
       return const Right(null);
-    } on CacheException catch (e) {
-      AppLogger.error('Repository: Cache error deleting alarm - ${e.message}');
+    } on AlarmDataSourceException catch (e) {
+      AppLogger.error('Repository: DataSource exception - ${e.message}');
       return Left(CacheFailure(e.message));
-    } catch (e) {
-      AppLogger.error('Repository: Error deleting alarm - $e');
-      return Left(CacheFailure('Failed to delete alarm: $e'));
+    } catch (e, stackTrace) {
+      AppLogger.error('Repository: Unexpected error - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+      return Left(CacheFailure('Failed to delete alarm'));
     }
   }
 
@@ -63,21 +71,32 @@ class AlarmRepositoryImpl implements AlarmRepository {
       AppLogger.info('Repository: Toggling alarm $id to $isActive');
 
       final alarms = await localDataSource.getAlarms();
+      AppLogger.info('Repository: Found ${alarms.length} alarms in storage');
+
       final alarmIndex = alarms.indexWhere((a) => a.id == id);
 
       if (alarmIndex == -1) {
+        AppLogger.error('Repository: Alarm $id not found');
+        AppLogger.info(
+          'Repository: Available IDs: ${alarms.map((a) => a.id).toList()}',
+        );
         return Left(CacheFailure('Alarm not found'));
       }
 
+      AppLogger.info('Repository: Found alarm at index $alarmIndex');
+
       final updatedAlarm = alarms[alarmIndex].copyWith(isActive: isActive);
       await localDataSource.updateAlarm(updatedAlarm);
+
+      AppLogger.info('Repository: Alarm toggled successfully');
       return const Right(null);
-    } on CacheException catch (e) {
-      AppLogger.error('Repository: Cache error toggling alarm - ${e.message}');
+    } on AlarmDataSourceException catch (e) {
+      AppLogger.error('Repository: DataSource exception - ${e.message}');
       return Left(CacheFailure(e.message));
-    } catch (e) {
-      AppLogger.error('Repository: Error toggling alarm - $e');
-      return Left(CacheFailure('Failed to toggle alarm: $e'));
+    } catch (e, stackTrace) {
+      AppLogger.error('Repository: Unexpected error - $e');
+      AppLogger.error('StackTrace: $stackTrace');
+      return Left(CacheFailure('Failed to toggle alarm'));
     }
   }
 }
