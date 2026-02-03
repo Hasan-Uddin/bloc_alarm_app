@@ -25,6 +25,8 @@ A production-ready Flutter application built with Clean Architecture, BLoC patte
 - ✅ Comprehensive error handling and logging
 
 ## 📁 Project Structure
+
+```
 lib/
 ├── common_widgets/ # Reusable UI components
 │ ├── custom_button.dart
@@ -90,6 +92,7 @@ lib/
 ├── route.dart # App route
 └── main.dart # App entry point
 
+```
 
 ## 🚀 Getting Started
 
@@ -110,7 +113,7 @@ lib/
    ```bash
    flutter pub run build_runner build
    ```
-   This generates the required Hive adapters (e.g., `note_model.g.dart`)
+   This generates the required Hive adapters
 
 4. **Run the app:**
    ```bash
@@ -192,6 +195,9 @@ Reusable widgets available in `lib/common_widgets/`:
 - [Flutter Clean Architecture Guide](https://resocoder.com/flutter-clean-architecture-tdd/)
 - [BLoC Pattern Documentation](https://bloclibrary.dev/)
 - [Hive Documentation](https://docs.hivedb.dev/)
+
+## Base Template
+- [Source Template App](https://github.com/Hasan-Uddin/flutter_clean_app_NoteApp_Example)
 
 ## 🤝 Contributing
 
