@@ -13,4 +13,5 @@ class AppRoutes {
   static const String noteCreate = '/notes/create';
   static const String noteEdit = '/notes/edit';
   static const String locationScreen = '/location-screen';
+  static const String alarmHome = '/alarm-home';
 }

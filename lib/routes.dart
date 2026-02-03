@@ -1,3 +1,4 @@
+import 'package:alarm_app/features/alarms/presentation/pages/alarm_home_page.dart';
 import 'package:alarm_app/features/location/presentation/pages/location_screen.dart';
 import 'package:flutter/material.dart';
 import 'constants/app_routes.dart';
@@ -15,6 +16,9 @@ class AppRouter {
 
       case AppRoutes.locationScreen:
         return MaterialPageRoute(builder: (_) => const LocationScreen());
+
+      case AppRoutes.alarmHome:
+        return MaterialPageRoute(builder: (_) => const AlarmHomePage());
 
       case AppRoutes.notesList:
         return MaterialPageRoute(builder: (_) => const NotesListPage());
