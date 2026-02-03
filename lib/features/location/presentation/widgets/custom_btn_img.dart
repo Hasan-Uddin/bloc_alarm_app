@@ -10,14 +10,14 @@ class CustomBtnImg extends StatelessWidget {
     required this.text,
     required this.icon,
     required this.onPressed,
-    this.marginVer = 40,
+    this.marginVer = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 60,
-      margin: EdgeInsets.symmetric(horizontal: 40, vertical: marginVer),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: marginVer),
       width: double.infinity,
       child: TextButton.icon(
         onPressed: onPressed,

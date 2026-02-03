@@ -156,7 +156,7 @@ class _OnboardingPageContentState extends State<_OnboardingPageContent> {
     }
 
     context.read<OnboardingBloc>().add(const CompleteOnboardingEvent());
-    Navigator.of(context).pushReplacementNamed(AppRoutes.notesList);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.locationScreen);
   }
 
   @override

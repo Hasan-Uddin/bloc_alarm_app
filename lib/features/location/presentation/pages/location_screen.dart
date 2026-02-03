@@ -1,3 +1,5 @@
+import 'package:alarm_app/constants/app_colors.dart';
+import 'package:alarm_app/constants/app_strings.dart';
 import 'package:alarm_app/features/location/presentation/widgets/custom_btn.dart';
 import 'package:alarm_app/features/location/presentation/widgets/custom_btn_img.dart';
 import 'package:flutter/material.dart';
@@ -75,9 +77,11 @@ class _LocationScreenContent extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.secondaryDark,
         behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.zero,
         duration: const Duration(seconds: 3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
         action: SnackBarAction(
           label: 'Dismiss',
           textColor: Colors.white,
@@ -125,29 +129,27 @@ class _LocationScreenContent extends StatelessWidget {
     return Center(
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
-          maxHeight: MediaQuery.of(context).size.width * 0.7,
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
+          // maxHeight: MediaQuery.of(context).size.width * 0.6,
         ),
         child: AspectRatio(
-          aspectRatio: 1,
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/location_illustration.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.location_on_outlined,
-                    size: 100,
-                    color: Colors.white,
-                  ),
-                );
-              },
-            ),
+          aspectRatio: 1.5,
+          child: Image.asset(
+            AppStrings.locationImage,
+            fit: BoxFit.fill,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.location_on_outlined,
+                  size: 100,
+                  color: Colors.white,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -181,7 +183,6 @@ class _LocationScreenContent extends StatelessWidget {
             context.read<LocationBloc>().add(GetCurrentLocationEvent());
           },
           icon: const Icon(Icons.location_on_outlined),
-          marginVer: 10,
         ),
 
         const SizedBox(height: 16),
@@ -189,7 +190,6 @@ class _LocationScreenContent extends StatelessWidget {
         // Skip Button
         CustomBtn(
           text: 'Home',
-          marginVer: 10,
           onPressed: () {
             context.read<LocationBloc>().add(SkipLocationEvent());
           },
