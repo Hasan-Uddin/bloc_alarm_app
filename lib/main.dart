@@ -1,6 +1,7 @@
 import 'package:alarm_app/features/alarms/data/models/alarm_model.dart';
 import 'package:alarm_app/features/location/data/models/location_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'core/di/injection.dart';
@@ -20,6 +21,18 @@ import 'helpers/logger.dart';
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Edge-to-edge mode keeps status bar visible on all devices
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  // Status bar style
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Transparent background
+      statusBarIconBrightness: Brightness.dark, // Android icons black
+      statusBarBrightness: Brightness.light, // iOS text
+    ),
+  );
 
   // Initialize Hive and SharedPreferences
   await LocalStorage.init();
