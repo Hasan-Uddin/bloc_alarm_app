@@ -1,4 +1,3 @@
-import 'package:alarm_app/constants/app_colors.dart';
 import 'package:alarm_app/helpers/snackbar_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
