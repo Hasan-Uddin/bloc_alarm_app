@@ -1,4 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Notifications -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+<!-- Exact alarms (Android 12+) -->
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+<!-- Keep CPU alive for alarms -->
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+<!-- Run background services -->
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+<!-- Location -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+<!-- Network -->
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+<!-- Media player -->
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+
     <application
         android:label="alarm_app"
         android:name="${applicationName}"
